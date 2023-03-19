@@ -1,11 +1,11 @@
 import glfw
 from OpenGL.GL import *
-import OpenGL.GL.shaders
+import OpenGL.GL.shaders as shaders
 import numpy
 
 
 def main():
-    # initialize glfw
+
     if not glfw.init():
         return
 
@@ -16,17 +16,23 @@ def main():
         return
 
     glfw.make_context_current(window)
+
+
     #            positions        colors
     triangle = [-0.5, -0.5, 0.0, 1.0, 0.0, 0.0,
-                0.5, -0.5, 0.0, 0.0, 1.0, 0.0,
-                0.0, 0.5, 0.0, 0.0, 0.0, 1.0]
+                 0.5, -0.5, 0.0, 0.0, 1.0, 0.0,
+                 0.0,  0.5, 0.0, 0.0, 0.0, 1.0]
 
-    triangle = numpy.array(triangle, dtype=numpy.float32)
 
-    vertex_shader = """
+    triangle = numpy.array(triangle, dtype = numpy.float32)
+
+    print(triangle.itemsize * triangle.size)
+
+    vertex_shader_source = """
     #version 330
     in vec3 position;
     in vec3 color;
+
     out vec3 newColor;
     void main()
     {
@@ -35,21 +41,26 @@ def main():
     }
     """
 
-    fragment_shader = """
+    fragment_shader_source = """
     #version 330
     in vec3 newColor;
+
     out vec4 outColor;
     void main()
     {
         outColor = vec4(newColor, 1.0f);
     }
     """
-    shader = OpenGL.GL.shaders.compileProgram(OpenGL.GL.shaders.compileShader(vertex_shader, GL_VERTEX_SHADER),
-                                              OpenGL.GL.shaders.compileShader(fragment_shader, GL_FRAGMENT_SHADER))
+
+    vertex_shader = shaders.compileShader(vertex_shader_source, GL_VERTEX_SHADER)
+    fragment_shader = shaders.compileShader(fragment_shader_source, GL_FRAGMENT_SHADER)
+    shader = shaders.compileProgram(vertex_shader, fragment_shader)
+
 
     VBO = glGenBuffers(1)
     glBindBuffer(GL_ARRAY_BUFFER, VBO)
     glBufferData(GL_ARRAY_BUFFER, 72, triangle, GL_STATIC_DRAW)
+
 
     position = glGetAttribLocation(shader, "position")
     glVertexAttribPointer(position, 3, GL_FLOAT, GL_FALSE, 24, ctypes.c_void_p(0))
@@ -61,7 +72,7 @@ def main():
 
     glUseProgram(shader)
 
-    glClearColor(0.2, 0.3, 0.2, 1.0)
+    glClearColor(0, 0, 0, 0)
 
     while not glfw.window_should_close(window):
         glfw.poll_events()
