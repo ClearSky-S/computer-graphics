@@ -4,6 +4,7 @@ import glm
 import ctypes
 import numpy as np
 
+g_triangle_translation = glm.vec3()
 g_cam_ang = 0.
 g_cam_height = .1
 g_is_ortho = True
@@ -92,18 +93,30 @@ def key_callback(window, key, scancode, action, mods):
         glfwSetWindowShouldClose(window, GLFW_TRUE);
     else:
         if action == GLFW_PRESS or action == GLFW_REPEAT:
-            if key == GLFW_KEY_A:
+            if key == GLFW_KEY_1:
                 g_cam_ang += np.radians(-10)
-            elif key == GLFW_KEY_D:
+            elif key == GLFW_KEY_3:
                 g_cam_ang += np.radians(10)
-            elif key == GLFW_KEY_W:
+            elif key == GLFW_KEY_2:
                 # height limit
                 if (g_cam_height < 0.5):
                     g_cam_height += .05
-            elif key == GLFW_KEY_S:
+            elif key == GLFW_KEY_W:
                 # height limit
                 if (g_cam_height > - 0.5):
                     g_cam_height += -.05
+            elif key == GLFW_KEY_Q:
+                g_triangle_translation.x += .01
+            elif key == GLFW_KEY_A:
+                g_triangle_translation.x -= .01
+            elif key == GLFW_KEY_E:
+                g_triangle_translation.y += .01
+            elif key == GLFW_KEY_D:
+                g_triangle_translation.y -= .01
+            elif key == GLFW_KEY_Z:
+                g_triangle_translation.z += .01
+            elif key == GLFW_KEY_X:
+                g_triangle_translation.z -= .01
 
 
 def prepare_vao_triangle():
@@ -213,7 +226,7 @@ def main():
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE)  # for macOS
 
     # create a window and OpenGL context
-    window = glfwCreateWindow(800, 800, '3-lookat', None, None)
+    window = glfwCreateWindow(800, 800, '2021038131 장준혁', None, None)
     if not window:
         glfwTerminate()
         return
@@ -247,7 +260,7 @@ def main():
         else:
             P = glm.ortho(-1, 1, -1, 1, -1, 1)
 
-        V = glm.lookAt(glm.vec3(.1 * np.sin(g_cam_ang), g_cam_height, .1 * np.cos(g_cam_ang)), glm.vec3(.06, 0, 0),
+        V = glm.lookAt(glm.vec3(.1 * np.sin(g_cam_ang), g_cam_height, .1 * np.cos(g_cam_ang)), glm.vec3(0, 0, 0),
                        glm.vec3(0, 1, 0))
         draw_grid(MVP_loc, P, V, vao_frame)
 
@@ -264,7 +277,7 @@ def main():
         # scaling
         S = glm.scale(glm.vec3(np.sin(t), np.sin(t), np.sin(t)))
 
-        M = R
+        M = glm.translate(g_triangle_translation)*R
         # M = T
         # M = S
         # M = R @ T
