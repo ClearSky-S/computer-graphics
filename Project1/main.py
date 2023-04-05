@@ -132,7 +132,7 @@ def key_callback(window, key, scancode, action, mods):
             #     g_triangle_translation.z -= .01
 
 def scroll_callback(window, xoffset, yoffset):
-    print(xoffset, yoffset)
+    # print(xoffset, yoffset)
     if yoffset < 0:
         camera.distance += 0.05
     elif yoffset > 0:
