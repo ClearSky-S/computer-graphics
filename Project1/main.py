@@ -132,12 +132,18 @@ def key_callback(window, key, scancode, action, mods):
             #     g_triangle_translation.z -= .01
 
 def scroll_callback(window, xoffset, yoffset):
-    # print(xoffset, yoffset)
     if yoffset < 0:
         camera.distance += 0.05
     elif yoffset > 0:
         if camera.distance>0.06:
             camera.distance -= 0.05
+    # offset = glm.vec4(0, 0, yoffset*0.01, 0)
+    # if (glm.determinant(camera.get_view_matrix_raw()) != 0):
+    #     offset = glm.inverse(camera.get_view_matrix_raw()) * offset
+    # else:
+    #     offset = glm.vec3(0, 0, 0)
+    # offset = glm.vec3(offset)
+    # camera.origin = glm.vec3(glm.translate(offset) * glm.vec4(camera.origin, 1))
 def mouse_button_callback(window, button, action, mods):
     global is_panning, is_orbiting
     if (button == GLFW_MOUSE_BUTTON_RIGHT) & (action == GLFW_PRESS):
