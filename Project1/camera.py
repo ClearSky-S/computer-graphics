@@ -32,7 +32,8 @@ class Camera:
         if self.isPerspective:
             return glm.perspective(45, 1, 0.1, 10) * glm.lookAt(self.camera_position(), self.origin, self.up)
         else:
-            return PROJECTION_MATRIX * glm.lookAt(self.camera_position(), self.origin, self.up)
+            d = self.distance
+            return glm.ortho(-d, d, -d, d, -d, d) * glm.lookAt(self.camera_position(), self.origin, self.up)
 
     def get_view_matrix_raw(self):
         return glm.lookAt(self.camera_position(), self.origin, self.up)
