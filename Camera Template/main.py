@@ -101,7 +101,7 @@ def key_callback(window, key, scancode, action, mods):
                 camera.isPerspective = not camera.isPerspective
             if key == GLFW_KEY_R:
                 # reset camera view target
-                camera.origin = glm.wvec3(0, 0, 0)
+                camera.origin = glm.vec3(0, 0, 0)
             if key == GLFW_KEY_TAB:
                 if is_wireframe:
                     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
