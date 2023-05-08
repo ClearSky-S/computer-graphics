@@ -26,7 +26,7 @@ def init_gameobjects():
     kazusa = GameObject("Kazusa", cake, "Kazusa.obj")
     kazusa.transform.scale = (0.1,0.1,0.1)
     kazusa.transform.position = (-0.6*0.1, 0.23*0.1, -0.4*0.1)
-    kazusa.transform.rotation = (0, -120, 0)
+    kazusa.transform.rotation = [0, -120, 0]
     multi_gameobjects.append(kazusa)
 
     kazusa_gun = GameObject("Kazusa_gun", kazusa, "kazusa_gun.obj")
@@ -42,7 +42,7 @@ def init_gameobjects():
     Shiroko = GameObject("Shiroko", cake, "Shiroko.obj")
     Shiroko.transform.scale = (0.1, 0.1, 0.1)
     Shiroko.transform.position = (0.2 * 0.1, 0.23 * 0.1, 0.7 * 0.1)
-    Shiroko.transform.rotation = (0, 15, 0)
+    Shiroko.transform.rotation = [0, 15, 0]
     multi_gameobjects.append(Shiroko)
 
     drone = GameObject("Drone", Shiroko, "drone.obj")
@@ -218,7 +218,7 @@ def key_callback(window, key, scancode, action, mods):
             if key == GLFW_KEY_R:
                 # reset camera view target
                 camera.origin = glm.vec3(0, 0, 0)
-            if key == GLFW_KEY_TAB:
+            if key == GLFW_KEY_Z:
                 if is_wireframe:
                     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
 
@@ -520,10 +520,14 @@ def main():
                 # t = 0
                 if gameobject.name == 'Cake':
                     gameobject.transform.rotation[1] = t*30
+                if gameobject.name == 'Kazusa':
+                    gameobject.transform.rotation[1] = -120 + 30* np.sin(t*2)
                 if gameobject.name == 'Macaron':
                     gameobject.transform.position = (0, 1.05+0.05*np.sin(t*5), 0)
                 if gameobject.name == 'Kazusa_gun':
                     gameobject.transform.position = (0.25, 0.05+0.05*np.sin(t*2), 0)
+                if gameobject.name == 'Shiroko':
+                    gameobject.transform.rotation[1] = 15 - 30* np.sin(t*2)
                 if gameobject.name == 'Drone':
                     gameobject.transform.position = (0.15, 1.1+0.05*np.sin(t*5), 0)
                 if gameobject.name == 'Shiroko_gun':
