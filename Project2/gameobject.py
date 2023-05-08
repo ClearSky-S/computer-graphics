@@ -42,7 +42,7 @@ class Mesh:
         self.texcoords = []
         self.faces = []
         self.vao = None
-        self.gl_vertex=[]
+        self.gl_vertex=[] # postion and normal
         material = None
         for line in open(filename, "r"):
             if line.startswith('#'): continue

@@ -14,7 +14,7 @@ is_orbiting = False
 is_wireframe = False
 g_triangle_translation = glm.vec3()
 is_single_mesh_mode = True
-gameobject_singe = GameObject("single", None, "Kazusa.obj")
+gameobject_single = GameObject("single", None, "Kazusa.obj")
 multi_gameobjects = [
 ]
 
@@ -452,7 +452,7 @@ def main():
 
     # prepare vaos
     vao_frame = prepare_vao_frame()
-    vao_object = prepare_vao_GameObject(gameobject_singe)
+    vao_object = prepare_vao_GameObject(gameobject_single)
 
 
     # loop until the user closes the window
@@ -462,6 +462,33 @@ def main():
         # enable depth test (we'll see details later)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         glEnable(GL_DEPTH_TEST)
+
+
+
+        # draw triangle w.r.t. the current frame
+        # t = glfwGetTime()
+        # th = np.radians(t * 90)
+        # R = glm.rotate(th, glm.vec3(0, 0, 1))
+        # M = glm.translate(g_triangle_translation)*R
+        # Set M = I if you want to see the triangle in the world frame
+        # M = glm.mat4()
+        # MVP = camera.get_view_matrix() * M
+        # glUniformMatrix4fv(MVP_loc, 1, GL_FALSE, glm.value_ptr(MVP))
+        # glUniformMatrix4fv(unif_locs_color['MVP'], 1, GL_FALSE, glm.value_ptr(MVP))
+
+        glUseProgram(shader_lighting)
+        if is_single_mesh_mode:
+            glBindVertexArray(vao_object)
+            M = gameobject_single.get_world_transform_mat()
+            MVP = camera.get_view_matrix() * M
+            glUniformMatrix4fv(unif_locs_lighting['MVP'], 1, GL_FALSE, glm.value_ptr(MVP))
+            glUniformMatrix4fv(unif_locs_lighting['M'], 1, GL_FALSE, glm.value_ptr(M))
+            glUniform3f(unif_locs_lighting['material_color'], 1., 1., 1.)
+            glUniform3f(unif_locs_lighting['view_pos'], camera.camera_position().x, camera.camera_position().y, camera.camera_position().z)
+            glDrawArrays(GL_TRIANGLES, 0, len(gameobject_single.mesh.faces) * 3)
+        else:
+            pass
+
 
         glUseProgram(shader_program)
         # Draw Screen Frame
@@ -473,40 +500,6 @@ def main():
         glDrawArrays(GL_LINES, 0, 4)
 
         draw_grid(unif_locs_color['MVP'], camera, vao_frame)
-
-        # draw triangle w.r.t. the current frame
-        # t = glfwGetTime()
-        # th = np.radians(t * 90)
-        # R = glm.rotate(th, glm.vec3(0, 0, 1))
-        # M = glm.translate(g_triangle_translation)*R
-        # Set M = I if you want to see the triangle in the world frame
-        M = glm.mat4()
-        MVP = camera.get_view_matrix() * M
-        # glUniformMatrix4fv(MVP_loc, 1, GL_FALSE, glm.value_ptr(MVP))
-        glUniformMatrix4fv(unif_locs_color['MVP'], 1, GL_FALSE, glm.value_ptr(MVP))
-        glBindVertexArray(vao_object)
-
-        glUseProgram(shader_lighting)
-        if is_single_mesh_mode:
-            M = gameobject_singe.get_world_transform_mat()
-            MVP = camera.get_view_matrix() * M
-            glUniformMatrix4fv(unif_locs_lighting['MVP'], 1, GL_FALSE, glm.value_ptr(MVP))
-            glUniformMatrix4fv(unif_locs_lighting['M'], 1, GL_FALSE, glm.value_ptr(M))
-            glUniform3f(unif_locs_lighting['material_color'], 1., 1., 1.)
-            glUniform3f(unif_locs_lighting['view_pos'], camera.camera_position().x, camera.camera_position().y, camera.camera_position().z)
-            glDrawArrays(GL_TRIANGLES, 0, len(gameobject_singe.mesh.faces) * 3)
-        else:
-            pass
-
-
-        # draw triangle
-        #glBindVertexArray(vao_object)
-        #glDrawArrays(GL_TRIANGLES, 0, 3)
-        # draw current frame
-        # glBindVertexArray(vao_frame)
-        # glDrawArrays(GL_LINES, 0, 6)
-
-
 
         # swap front and back buffers
         glfwSwapBuffers(window)
