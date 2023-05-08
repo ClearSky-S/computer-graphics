@@ -8,7 +8,7 @@ from gameobject import GameObject, Mesh
 initial_viewport_size = (1200, 800)
 screen_pos_prev = (0,0)
 screen_pos = (0,0)
-camera = Camera(initial_viewport_size)
+camera = Camera(initial_viewport_size, distance=3)
 is_panning = False
 is_orbiting = False
 is_wireframe = False
