@@ -64,7 +64,7 @@ void main()
 '''
 
 class Node:
-    def __init__(self, parent, scale, color):
+    def __init__(self, parent, link_transform_from_parent, shape_transform, color):
         # hierarchy
         self.parent = parent
         self.children = []
@@ -72,29 +72,30 @@ class Node:
             parent.children.append(self)
 
         # transform
-        self.transform = glm.mat4()
+        self.link_transform_from_parent = link_transform_from_parent
+        self.joint_transform = glm.mat4()
         self.global_transform = glm.mat4()
 
         # shape
-        self.scale = scale
+        self.shape_transform = shape_transform
         self.color = color
 
-    def set_transform(self, transform):
-        self.transform = transform
+    def set_joint_transform(self, joint_transform):
+        self.joint_transform = joint_transform
 
     def update_tree_global_transform(self):
         if self.parent is not None:
-            self.global_transform = self.parent.get_global_transform() * self.transform
+            self.global_transform = self.parent.get_global_transform() * self.link_transform_from_parent * self.joint_transform
         else:
-            self.global_transform = self.transform
+            self.global_transform = self.link_transform_from_parent * self.joint_transform
 
         for child in self.children:
             child.update_tree_global_transform()
 
     def get_global_transform(self):
         return self.global_transform
-    def get_scale(self):
-        return self.scale
+    def get_shape_transform(self):
+        return self.shape_transform
     def get_color(self):
         return self.color
 
@@ -228,12 +229,12 @@ def draw_frame(vao, MVP, MVP_loc):
     glDrawArrays(GL_LINES, 0, 6)
 
 def draw_node(vao, node, VP, MVP_loc, color_loc):
-    MVP = VP * node.get_global_transform() * glm.scale(node.get_scale())
+    MVP = VP * node.get_global_transform() * node.get_shape_transform()
     color = node.get_color()
 
     glBindVertexArray(vao)
     glUniformMatrix4fv(MVP_loc, 1, GL_FALSE, glm.value_ptr(MVP))
-    glUniform3fv(color_loc, 1, glm.value_ptr(color))
+    glUniform3f(color_loc, color.r, color.g, color.b)
     glDrawArrays(GL_TRIANGLES, 0, 6)
 
 
@@ -269,11 +270,9 @@ def main():
     vao_box = prepare_vao_box()
     vao_frame = prepare_vao_frame()
 
-    # create a hirarchical model 
-    base = Node(None, glm.vec3(.2,.2,0.), glm.vec3(0,0,1))
-    arm = Node(base, glm.vec3(.25,.1,0.), glm.vec3(1,0,0))
-    arm2pivot = Node(arm, glm.vec3(.25, .1, 0.), glm.vec3(0, 1, 0))
-    arm2 = Node(arm2pivot, glm.vec3(.25, .1, 0.), glm.vec3(0, 1, 0))
+    # create a hirarchical model - Node(parent, link_transform_from_parent, shape_transform, color)
+    base = Node(None, glm.mat4(), glm.scale((.2,.2,0.)), glm.vec3(0,0,1))
+    arm = Node(base, glm.translate(glm.vec3(.2,0,0)), glm.translate((.5,0,.01)) * glm.scale((.5,.1,0.)), glm.vec3(1,0,0))
 
     # loop until the user closes the window
     while not glfwWindowShouldClose(window):
@@ -295,10 +294,8 @@ def main():
         t = glfwGetTime()
 
         # set local transformations of each node
-        base.set_transform(glm.translate(glm.vec3(glm.sin(t),0,0)))
-        arm.set_transform(glm.rotate(t, glm.vec3(0,0,1)) * glm.translate(glm.vec3(.25, 0, .01)))
-        arm2pivot.set_transform(glm.translate(glm.vec3(0, 0, .01)))
-        arm2.set_transform(glm.rotate(t, glm.vec3(0, 0, 1)) * glm.translate(glm.vec3(.5, 0, .01)))
+        base.set_joint_transform(glm.translate((glm.sin(t),0,0)))
+        arm.set_joint_transform(glm.rotate(t, (0,0,1)))
 
         # recursively update global transformations of all nodes
         base.update_tree_global_transform()
@@ -307,7 +304,6 @@ def main():
         glUseProgram(shader_for_box)
         draw_node(vao_box, base, P*V, MVP_loc_box, color_loc_box)
         draw_node(vao_box, arm, P*V, MVP_loc_box, color_loc_box)
-        draw_node(vao_box, arm2, P * V, MVP_loc_box, color_loc_box)
 
 
         # swap front and back buffers
