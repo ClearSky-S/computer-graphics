@@ -34,8 +34,11 @@ class Transform:
                glm.scale(glm.mat4(1.0), self.scale)
 
 class Mesh:
-    def __init__(self, filename):
+    def __init__(self, filepath):
         """Loads a Wavefront OBJ file. """
+        self.filepath = filepath
+        self.filename = filepath.split('\\')[-1]
+        # print(filename)
         self.pivot = [0, 0, 0]
         self.vertices = []
         self.normals = []
@@ -44,7 +47,7 @@ class Mesh:
         self.vao = None
         self.gl_vertex=[] # postion and normal
         material = None
-        for line in open(filename, "r"):
+        for line in open(filepath, "r"):
             if line.startswith('#'): continue
             values = line.split()
             if not values: continue
@@ -92,4 +95,22 @@ class Mesh:
                     self.gl_vertex.append(self.normals[element[1][i]-1][0])
                     self.gl_vertex.append(self.normals[element[1][i]-1][1])
                     self.gl_vertex.append(self.normals[element[1][i]-1][2])
+    def __str__(self):
+        face_3vertex = 0
+        face_4vertex = 0
+        face_5upvertex = 0
+        for element in self.faces:
+            if len(element[0]) == 3:
+                face_3vertex += 1
+            elif len(element[0]) == 4:
+                face_4vertex += 1
+            else:
+                face_5upvertex += 1
+
+        info = self.filename + '\n'
+        info += "faces: " + str(len(self.faces)) + '\n'
+        info += "faces with 3 vertices: " + str(face_3vertex) + '\n'
+        info += "faces with 4 vertices: " + str(face_4vertex) + '\n'
+        info += "faces with 5+ vertices: " + str(face_5upvertex) + '\n'
+        return info
 

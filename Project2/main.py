@@ -19,12 +19,40 @@ multi_gameobjects = [
 ]
 
 def init_gameobjects():
-    gameObject = GameObject("Kazusa1", None, "Kazusa.obj")
-    gameObject.transform.position = (1, 0, 0)
-    multi_gameobjects.append(gameObject)
-    gameObject = GameObject("Kazusa2", None, "Kazusa.obj")
-    gameObject.transform.position = (-1, 0, 0)
-    multi_gameobjects.append(gameObject)
+    cake = GameObject("Cake", None, "cake.obj")
+    cake.transform.scale = (10.0,10.0,10.0)
+    multi_gameobjects.append(cake)
+
+    kazusa = GameObject("Kazusa", cake, "Kazusa.obj")
+    kazusa.transform.scale = (0.1,0.1,0.1)
+    kazusa.transform.position = (-0.6*0.1, 0.23*0.1, -0.4*0.1)
+    kazusa.transform.rotation = (0, -120, 0)
+    multi_gameobjects.append(kazusa)
+
+    kazusa_gun = GameObject("Kazusa_gun", kazusa, "kazusa_gun.obj")
+    kazusa_gun.transform.position = (0.25, 0.05, 0)
+    kazusa_gun.transform.rotation = (0, -90, 0)
+    multi_gameobjects.append(kazusa_gun)
+
+    macaron = GameObject("Macaron", kazusa, "macaron.obj")
+    macaron.transform.position = (0, 1.05, 0)
+    macaron.transform.scale = (3, 3, 3)
+    multi_gameobjects.append(macaron)
+
+    Shiroko = GameObject("Shiroko", cake, "Shiroko.obj")
+    Shiroko.transform.scale = (0.1, 0.1, 0.1)
+    Shiroko.transform.position = (0.2 * 0.1, 0.23 * 0.1, 0.7 * 0.1)
+    Shiroko.transform.rotation = (0, 15, 0)
+    multi_gameobjects.append(Shiroko)
+
+    drone = GameObject("Drone", Shiroko, "drone.obj")
+    drone.transform.position = (0.15, 1.1, 0)
+    multi_gameobjects.append(drone)
+
+    Shiroko_gun = GameObject("Shiroko_gun", Shiroko, "Shiroko_gun.obj")
+    Shiroko_gun.transform.position = (0.25, 0.15, 0)
+    Shiroko_gun.transform.rotation = (0, -90, 0)
+    multi_gameobjects.append(Shiroko_gun)
 
 
 g_vertex_shader_src = '''
@@ -180,7 +208,7 @@ def load_shaders(vertex_shader_source, fragment_shader_source):
     return shader_program  # return the shader program
 
 def key_callback(window, key, scancode, action, mods):
-    global g_cam_ang, g_cam_height, is_wireframe
+    global g_cam_ang, g_cam_height, is_wireframe, is_single_mesh_mode
     if key == GLFW_KEY_ESCAPE and action == GLFW_PRESS:
         glfwSetWindowShouldClose(window, GLFW_TRUE);
     else:
@@ -197,6 +225,8 @@ def key_callback(window, key, scancode, action, mods):
                 else:
                     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
                 is_wireframe = not is_wireframe
+            if key == GLFW_KEY_H:
+                is_single_mesh_mode = not is_single_mesh_mode
 
 def scroll_callback(window, xoffset, yoffset):
     if yoffset < 0:
@@ -236,9 +266,10 @@ def mouse_button_callback(window, button, action, mods):
         glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_FALSE)
 
 def drop_callback(window, paths):
-    print(paths[0])
+    # print(paths[0])
     gameobject_single.mesh = Mesh(paths[0])
     prepare_vao_GameObject(gameobject_single)
+    print(gameobject_single.mesh)
 def framebuffer_size_callback(window, width, height):
     glViewport(0, 0, width, height)
     camera.set_viewport_size(width, height)
@@ -458,7 +489,10 @@ def main():
 
     # prepare vaos
     vao_frame = prepare_vao_frame()
+    init_gameobjects()
     prepare_vao_GameObject(gameobject_single)
+    for gameobject in multi_gameobjects:
+        prepare_vao_GameObject(gameobject)
 
 
     # loop until the user closes the window
@@ -481,7 +515,28 @@ def main():
             glUniform3f(unif_locs_lighting['view_pos'], camera.camera_position().x, camera.camera_position().y, camera.camera_position().z)
             glDrawArrays(GL_TRIANGLES, 0, len(gameobject_single.mesh.faces) * 3)
         else:
-            pass
+            for gameobject in multi_gameobjects:
+                t = glfwGetTime()
+                # t = 0
+                if gameobject.name == 'Cake':
+                    gameobject.transform.rotation[1] = t*30
+                if gameobject.name == 'Macaron':
+                    gameobject.transform.position = (0, 1.05+0.05*np.sin(t*5), 0)
+                if gameobject.name == 'Kazusa_gun':
+                    gameobject.transform.position = (0.25, 0.05+0.05*np.sin(t*2), 0)
+                if gameobject.name == 'Drone':
+                    gameobject.transform.position = (0.15, 1.1+0.05*np.sin(t*5), 0)
+                if gameobject.name == 'Shiroko_gun':
+                    gameobject.transform.position = (0.25, 0.15+0.05*np.sin(t*2), 0)
+                glBindVertexArray(gameobject.vao)
+                M = gameobject.get_world_transform_mat()
+                MVP = camera.get_view_matrix() * M
+                glUniformMatrix4fv(unif_locs_lighting['MVP'], 1, GL_FALSE, glm.value_ptr(MVP))
+                glUniformMatrix4fv(unif_locs_lighting['M'], 1, GL_FALSE, glm.value_ptr(M))
+                glUniform3f(unif_locs_lighting['material_color'], 1., 1., 1.)
+                glUniform3f(unif_locs_lighting['view_pos'], camera.camera_position().x, camera.camera_position().y,
+                            camera.camera_position().z)
+                glDrawArrays(GL_TRIANGLES, 0, len(gameobject.mesh.faces) * 3)
 
 
         # Draw Screen Frame
