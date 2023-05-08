@@ -213,13 +213,13 @@ def prepare_vao_object():
     # 36 vertices for 12 triangles
     vertices = glm.array(glm.float32,
                          # position            color
-                         -0.5, 0.5, 0.5, 1, 1, 1,  # v0
-                         0.5, -0.5, 0.5, 1, 1, 1,  # v2
-                         0.5, 0.5, 0.5, 1, 1, 1,  # v1
+                         -0.5, 0.5, 0.5, 0, 1, 1,  # v0
+                         0.5, -0.5, 0.5, 0, 1, 1,  # v2
+                         0.5, 0.5, 0.5, 0, 1, 1,  # v1
 
-                         -0.5, 0.5, 0.5, 1, 1, 1,  # v0
-                         -0.5, -0.5, 0.5, 1, 1, 1,  # v3
-                         0.5, -0.5, 0.5, 1, 1, 1,  # v2
+                         -0.5, 0.5, 0.5, 0, 1, 1,  # v0
+                         -0.5, -0.5, 0.5, 0, 1, 1,  # v3
+                         0.5, -0.5, 0.5, 0, 1, 1,  # v2
 
                          -0.5, 0.5, -0.5, 1, 1, 1,  # v4
                          0.5, 0.5, -0.5, 1, 1, 1,  # v5
@@ -312,8 +312,8 @@ def main():
     # load shaders
     shader_program = load_shaders(g_vertex_shader_src, g_fragment_shader_src)
     # glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_ALWAYS)
+    glEnable(GL_DEPTH_TEST)
+    # glDepthFunc(GL_ALWAYS)
     # get uniform locations
     MVP_loc = glGetUniformLocation(shader_program, 'MVP')
 
