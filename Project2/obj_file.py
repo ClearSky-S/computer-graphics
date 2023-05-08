@@ -78,24 +78,6 @@ class OBJ:
                     else:
                         norms.append(0)
                 self.faces.append((face, norms, texcoords, material))
-        # for face in self.faces:
-        #     vertices, normals, texture_coords, material = face
-        #     # vertices, normals, texcoords
-        #     # mtl = self.mtl[material]
-        #     # if 'texture_Kd' in mtl:
-        #     #     # use diffuse texmap
-        #     #     glBindTexture(GL_TEXTURE_2D, mtl['texture_Kd'])
-        #     # else:
-        #     #     # just use diffuse colour
-        #     #     glColor(*mtl['Kd'])
-        #     glBegin(GL_POLYGON)
-        #     for i in range(len(vertices)):
-        #         if normals[i] > 0:
-        #             glNormal3fv(normals[normals[i] - 1])
-        #         # if texture_coords[i] > 0:
-        #         #     glTexCoord2fv(self.texcoords[texture_coords[i] - 1])
-        #         glVertex3fv(vertices[vertices[i] - 1])
-        #     glEnd()
 
 
 

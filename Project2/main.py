@@ -4,6 +4,7 @@ import glm
 import ctypes
 import numpy as np
 from camera import *
+from gameobject import GameObject, Mesh
 initial_viewport_size = (1200, 800)
 screen_pos_prev = (0,0)
 screen_pos = (0,0)
@@ -12,10 +13,19 @@ is_panning = False
 is_orbiting = False
 is_wireframe = False
 g_triangle_translation = glm.vec3()
-g_cam_ang = 0.
-g_cam_height = .1
-
 is_single_mesh_mode = True
+gameobject_singe = GameObject("single", None, "Kazusa.obj")
+multi_gameobjects = [
+]
+
+def init_gameobjects():
+    gameObject = GameObject("Kazusa1", None, "Kazusa.obj")
+    gameObject.transform.position = (1, 0, 0)
+    multi_gameobjects.append(gameObject)
+    gameObject = GameObject("Kazusa2", None, "Kazusa.obj")
+    gameObject.transform.position = (-1, 0, 0)
+    multi_gameobjects.append(gameObject)
+
 
 g_vertex_shader_src = '''
 
@@ -363,6 +373,34 @@ def prepare_vao_cube():
 
     return VAO
 
+def prepare_vao_GameObject(gameObject):
+    # prepare vertex data (in main memory)
+    # 36 vertices for 12 triangles
+    # create and activate VAO (vertex array object)
+    vertices = glm.array(glm.float32, *gameObject.mesh.gl_vertex)
+    VAO = glGenVertexArrays(1)  # create a vertex array object ID and store it to VAO variable
+    glBindVertexArray(VAO)  # activate VAO
+
+    # create and activate VBO (vertex buffer object)
+    VBO = glGenBuffers(1)  # create a buffer object ID and store it to VBO variable
+    glBindBuffer(GL_ARRAY_BUFFER, VBO)  # activate VBO as a vertex buffer object
+
+    # copy vertex data to VBO
+    glBufferData(GL_ARRAY_BUFFER, vertices.nbytes, vertices.ptr,
+                 GL_STATIC_DRAW)  # allocate GPU memory for and copy vertex data to the currently bound vertex buffer
+
+    # configure vertex positions
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * glm.sizeof(glm.float32), None)
+    glEnableVertexAttribArray(0)
+
+    # configure vertex normals
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * glm.sizeof(glm.float32),
+                          ctypes.c_void_p(3 * glm.sizeof(glm.float32)))
+    glEnableVertexAttribArray(1)
+
+    gameObject.vao = VAO
+    return VAO
+
 
 def main():
     global screen_pos, screen_pos_prev, is_panning, is_orbiting
@@ -414,7 +452,7 @@ def main():
 
     # prepare vaos
     vao_frame = prepare_vao_frame()
-    vao_object = prepare_vao_cube()
+    vao_object = prepare_vao_GameObject(gameobject_singe)
 
 
     # loop until the user closes the window
@@ -449,21 +487,18 @@ def main():
         glBindVertexArray(vao_object)
 
         glUseProgram(shader_lighting)
-        glUniformMatrix4fv(unif_locs_lighting['MVP'], 1, GL_FALSE, glm.value_ptr(MVP))
-        glUniformMatrix4fv(unif_locs_lighting['M'], 1, GL_FALSE, glm.value_ptr(M))
-        glUniform3f(unif_locs_lighting['material_color'], 1., 1., 1.)
-        glUniform3f(unif_locs_lighting['view_pos'], camera.camera_position().x, camera.camera_position().y, camera.camera_position().z)
-        # glUniformMatrix4fv(MVP_loc, 1, GL_FALSE, glm.value_ptr(MVP))
-        # glDrawArrays(GL_TRIANGLES, 0, 36)
+        if is_single_mesh_mode:
+            M = gameobject_singe.get_world_transform_mat()
+            MVP = camera.get_view_matrix() * M
+            glUniformMatrix4fv(unif_locs_lighting['MVP'], 1, GL_FALSE, glm.value_ptr(MVP))
+            glUniformMatrix4fv(unif_locs_lighting['M'], 1, GL_FALSE, glm.value_ptr(M))
+            glUniform3f(unif_locs_lighting['material_color'], 1., 1., 1.)
+            glUniform3f(unif_locs_lighting['view_pos'], camera.camera_position().x, camera.camera_position().y, camera.camera_position().z)
+            glDrawArrays(GL_TRIANGLES, 0, len(gameobject_singe.mesh.faces) * 3)
+        else:
+            pass
 
-        # for i in range(5):
-        #     for j in range(5):
-        #         for k in range(5):
-        #             MVP_cube = MVP * glm.translate(glm.vec3(1 * i, 1 * j, 1 * k)) * glm.scale(glm.vec3(.5, .5, .5))
-        #             glUniformMatrix4fv(MVP_loc, 1, GL_FALSE, glm.value_ptr(MVP_cube))
-        #             glDrawArrays(GL_TRIANGLES, 0, 36)
 
-        glDrawArrays(GL_TRIANGLES, 0, 36)
         # draw triangle
         #glBindVertexArray(vao_object)
         #glDrawArrays(GL_TRIANGLES, 0, 3)
