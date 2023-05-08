@@ -1,8 +1,3 @@
-import sys, pygame
-from pygame.locals import *
-from pygame.constants import *
-from OpenGL.GL import *
-from OpenGL.GLU import *
 
 # global vertices
 # global normals
@@ -26,12 +21,13 @@ def MTL(filename):
         elif mtl is None:
             raise ValueError
         elif values[0] == 'map_Kd':
+            pass
             # load the texture referred to by this declaration
             # mtl[values[0]] = values[1]
-            surf = pygame.image.load(mtl['map_Kd'])
-            image = pygame.image.tostring(surf, 'RGBA', 1)
-            ix, iy = surf.get_rect().size
-            texid = mtl['texture_Kd'] = glGenTextures(1)
+            # surf = pygame.image.load(mtl['map_Kd'])
+            # image = pygame.image.tostring(surf, 'RGBA', 1)
+            # ix, iy = surf.get_rect().size
+            # texid = mtl['texture_Kd'] = glGenTextures(1)
 
         else:
             mtl[values[0]] = map(float, values[1:])
