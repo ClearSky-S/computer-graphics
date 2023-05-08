@@ -84,7 +84,12 @@ class Mesh:
                 self.gl_vertex.append(self.vertices[element[0][i]-1][0])
                 self.gl_vertex.append(self.vertices[element[0][i]-1][1])
                 self.gl_vertex.append(self.vertices[element[0][i]-1][2])
-                self.gl_vertex.append(self.normals[element[1][i]-1][0])
-                self.gl_vertex.append(self.normals[element[1][i]-1][1])
-                self.gl_vertex.append(self.normals[element[1][i]-1][2])
+                if len(self.normals) == 0:
+                    self.gl_vertex.append(1)
+                    self.gl_vertex.append(1)
+                    self.gl_vertex.append(1)
+                else:
+                    self.gl_vertex.append(self.normals[element[1][i]-1][0])
+                    self.gl_vertex.append(self.normals[element[1][i]-1][1])
+                    self.gl_vertex.append(self.normals[element[1][i]-1][2])
 

@@ -234,6 +234,11 @@ def mouse_button_callback(window, button, action, mods):
         is_orbiting= False
         glfwSetInputMode(window, GLFW_CURSOR,  GLFW_CURSOR_NORMAL)
         glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_FALSE)
+
+def drop_callback(window, paths):
+    print(paths[0])
+    gameobject_single.mesh = Mesh(paths[0])
+    prepare_vao_GameObject(gameobject_single)
 def framebuffer_size_callback(window, width, height):
     glViewport(0, 0, width, height)
     camera.set_viewport_size(width, height)
@@ -424,6 +429,7 @@ def main():
     glfwSetScrollCallback(window, scroll_callback)
     glfwSetMouseButtonCallback(window, mouse_button_callback)
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback)
+    glfwSetDropCallback(window, drop_callback)
 
     # load shaders
     shader_program = load_shaders(g_vertex_shader_src, g_fragment_shader_src)
@@ -452,7 +458,7 @@ def main():
 
     # prepare vaos
     vao_frame = prepare_vao_frame()
-    vao_object = prepare_vao_GameObject(gameobject_single)
+    prepare_vao_GameObject(gameobject_single)
 
 
     # loop until the user closes the window
@@ -464,21 +470,9 @@ def main():
         glEnable(GL_DEPTH_TEST)
 
 
-
-        # draw triangle w.r.t. the current frame
-        # t = glfwGetTime()
-        # th = np.radians(t * 90)
-        # R = glm.rotate(th, glm.vec3(0, 0, 1))
-        # M = glm.translate(g_triangle_translation)*R
-        # Set M = I if you want to see the triangle in the world frame
-        # M = glm.mat4()
-        # MVP = camera.get_view_matrix() * M
-        # glUniformMatrix4fv(MVP_loc, 1, GL_FALSE, glm.value_ptr(MVP))
-        # glUniformMatrix4fv(unif_locs_color['MVP'], 1, GL_FALSE, glm.value_ptr(MVP))
-
         glUseProgram(shader_lighting)
         if is_single_mesh_mode:
-            glBindVertexArray(vao_object)
+            glBindVertexArray(gameobject_single.vao)
             M = gameobject_single.get_world_transform_mat()
             MVP = camera.get_view_matrix() * M
             glUniformMatrix4fv(unif_locs_lighting['MVP'], 1, GL_FALSE, glm.value_ptr(MVP))
@@ -490,12 +484,10 @@ def main():
             pass
 
 
-        glUseProgram(shader_program)
         # Draw Screen Frame
+        glUseProgram(shader_program)
         glBindVertexArray(vao_frame)
-
         I = glm.scale(glm.vec3(1/camera.get_viewport_ratio(),1,1))* glm.mat4(0.03, 0.03, 0.03, 1)
-        # glUniformMatrix4fv(MVP_loc, 1, GL_FALSE, glm.value_ptr(I))
         glUniformMatrix4fv(unif_locs_color['MVP'], 1, GL_FALSE, glm.value_ptr(I))
         glDrawArrays(GL_LINES, 0, 4)
 
