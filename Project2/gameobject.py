@@ -1,4 +1,3 @@
-from obj_file import OBJ
 import glm
 import numpy as np
 
