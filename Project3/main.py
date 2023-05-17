@@ -89,7 +89,7 @@ uniform vec3 material_color;
 void main()
 {
     // light and material properties
-    vec3 light_pos = vec3(4,5,3);
+    vec3 light_pos = vec3(200,250,150);
     vec3 light_color = vec3(1,1,1);
     float material_shininess = 32.0;
 
@@ -440,6 +440,10 @@ def main():
             glUseProgram(shader_program)
             glBindVertexArray(vao_frame)
             root_gameobject.draw_recusive_line(unif_locs_color, camera)
+        else:
+            glUseProgram(shader_lighting)
+            glBindVertexArray(vao_cube)
+            root_gameobject.draw_mesh_recursive(unif_locs_lighting, camera)
 
 
         glUseProgram(shader_lighting)
