@@ -7,7 +7,7 @@ import numpy as np
 
 class Camera:
 
-    def __init__(self, viewport_size=(800,800), origin=glm.vec3(0, 0, 0), distance=200, xz_angle=np.radians(45), y_angle=np.radians(45),
+    def __init__(self, viewport_size=(800,800), origin=glm.vec3(0, 0, 0), distance=500, xz_angle=np.radians(45), y_angle=np.radians(45),
                  up=glm.vec3(0, 1, 0), is_perspective=True):
         self.viewport_height = 1.
         self.viewport_width = self.viewport_height * viewport_size[0] / viewport_size[1]  # initial width/height
@@ -31,7 +31,7 @@ class Camera:
 
     def get_view_matrix(self):
         if self.isPerspective:
-            return glm.perspective(45, self.viewport_width/self.viewport_height, 0.1, 400) * glm.lookAt(self.camera_position(), self.origin, self.up)
+            return glm.perspective(45, self.viewport_width/self.viewport_height, 0.001, 20000) * glm.lookAt(self.camera_position(), self.origin, self.up)
         else:
             d = self.distance
             return glm.ortho(-d*self.viewport_width, d*self.viewport_width, -d*self.viewport_height, d*self.viewport_height, -d, d) * glm.lookAt(self.camera_position(), self.origin, self.up)

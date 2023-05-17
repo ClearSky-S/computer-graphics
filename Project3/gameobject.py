@@ -5,6 +5,7 @@ from glfw.GLFW import *
 import glm
 import ctypes
 from camera import *
+import os
 
 class GameObject:
     def __init__(self, name="gameobject", parent=None):
@@ -30,15 +31,15 @@ class GameObject:
         if self.parent is None:
             return self.transform.get_local_transform_mat() * self.link_transform.get_local_transform_mat()
         else:
-            return self.parent.get_world_transform_mat() * self.transform.get_local_transform_mat()
+            return self.parent.get_world_transform_mat() * self.transform.get_local_transform_mat() * self.link_transform.get_local_transform_mat()
 
     def print_recursive(self, depth=0):
         print("  " * depth + self.name)
-        print("  " * depth + "  - pos: " + self.transform.position.__str__())
-        print("  " * depth + "  - childs: " + self.children.__str__())
-        print("  " * depth + "  - link rotation index: " + self.chanel_index.rotation.__str__())
-        if self.end is not None:
-            print("  " * depth + "  - end: " + self.end.__str__())
+        # print("  " * depth + "  - pos: " + self.transform.position.__str__())
+        # print("  " * depth + "  - childs: " + self.children.__str__())
+        # print("  " * depth + "  - link rotation index: " + self.chanel_index.rotation.__str__())
+        # if self.end is not None:
+        #     print("  " * depth + "  - end: " + self.end.__str__())
 
         # print("  " * depth + " - childs: " + str(len(self.children)))
         for child in self.children:
@@ -92,6 +93,28 @@ class GameObject:
         for child in self.children:
             child.draw_mesh_recursive(unif_locs, camera)
 
+    def reset_link_transform(self):
+        self.link_transform = Transform(self, True)
+        for child in self.children:
+            child.reset_link_transform()
+
+    def update_animation(self, time, animation=None):
+        # print(self.name)
+        if animation is None:
+            animation = self.animation
+            animation.set_time(time)
+
+        if animation is not None:
+            for i in range(0,3):
+                if self.chanel_index.position[i] != -1:
+                    self.link_transform.position[i] = animation.current_anim_data[self.chanel_index.position[i]]
+            for i in range(0,3):
+                if self.chanel_index.rotation[i] != -1:
+                    self.link_transform.rotation[i] = animation.current_anim_data[self.chanel_index.rotation[i]]
+
+
+        for child in self.children:
+            child.update_animation(time, animation)
 
 
     def __str__(self):
@@ -99,6 +122,7 @@ class GameObject:
 
     def __repr__(self):
         return self.name
+
 
 
 class Transform:
@@ -142,11 +166,15 @@ class Animation:
         self.frame_time = 0.1
         self.animation_data = []
 
+        joint_cnt = 0
+
         f = open(filepath, 'r')
         file = f.read().split('\n')
         f.close()
         index = 0
         while file[index] != "MOTION":
+            if file[index].strip().split()[0] == "JOINT":
+                joint_cnt += 1
             index += 1
         index += 1
         # print(file[index])
@@ -164,8 +192,16 @@ class Animation:
         self.frame_time = float(file[index].split(':')[1])
         index += 1
 
-        for line in file[index:]:
-            self.animation_data.append(line.split(' '))
+        for line in file[index:-1]:
+            self.animation_data.append(list(map(float, line.strip().split())))
+
+        # 파일정보 출력
+        print("1. File name: " + os.path.split(filepath)[1])
+        print("2. Number of frames: " + str(self.frames))
+        print("3. Frame time: " + str(1/self.frame_time))
+        print("4. Number of joint: " + str(joint_cnt))
+
+
 
     def __str__(self):
         return "Frames: " + str(self.frames) + "\nFrame Time: " + str(self.frame_time) + "\nAnimation Data: " + str(
@@ -176,9 +212,9 @@ class Animation:
         return self.animation_data[self.current_frame]
 
     def set_time(self, time):
-        self.current_frame = int(time / self.frame_time)
-        if self.current_frame >= self.frames:
-            self.current_frame = self.current_frame % self.frames
+        self.current_frame = int(time / self.frame_time) % self.frames
+        # print(self.current_frame)
+        # print(self.current_anim_data[0])
 
 
 def read_bvh(filepath):
@@ -202,22 +238,22 @@ def read_bvh(filepath):
     index += 1
     words = file[index].strip().split(' ')
     for i in range(2, 2 + int(words[1])):
-        if words[i] == "Xposition":
+        if words[i].upper() == "Xposition".upper():
             root.chanel_index.position[0] = channel_index
             channel_index += 1
-        elif words[i] == "Yposition":
+        elif words[i].upper() == "Yposition".upper():
             root.chanel_index.position[1] = channel_index
             channel_index += 1
-        elif words[i] == "Zposition":
+        elif words[i].upper() == "Zposition".upper():
             root.chanel_index.position[2] = channel_index
             channel_index += 1
-        elif words[i] == "Xrotation":
+        elif words[i].upper() == "Xrotation".upper():
             root.chanel_index.rotation[0] = channel_index
             channel_index += 1
-        elif words[i] == "Yrotation":
+        elif words[i].upper() == "Yrotation".upper():
             root.chanel_index.rotation[1] = channel_index
             channel_index += 1
-        elif words[i] == "Zrotation":
+        elif words[i].upper() == "Zrotation".upper():
             root.chanel_index.rotation[2] = channel_index
             channel_index += 1
     while True:
@@ -235,22 +271,23 @@ def read_bvh(filepath):
             index += 1
             words = file[index].strip().split(' ')
             for i in range(2, 2 + int(words[1])):
-                if words[i] == "Xposition":
+                words[i] = words[i].upper()
+                if words[i] == "Xposition".upper():
                     game_object.chanel_index.position[0] = channel_index
                     channel_index += 1
-                elif words[i] == "Yposition":
+                elif words[i] == "Yposition".upper():
                     game_object.chanel_index.position[1] = channel_index
                     channel_index += 1
-                elif words[i] == "Zposition":
+                elif words[i] == "Zposition".upper():
                     game_object.chanel_index.position[2] = channel_index
                     channel_index += 1
-                elif words[i] == "Xrotation":
+                elif words[i] == "Xrotation".upper():
                     game_object.chanel_index.rotation[0] = channel_index
                     channel_index += 1
-                elif words[i] == "Yrotation":
+                elif words[i] == "Yrotation".upper():
                     game_object.chanel_index.rotation[1] = channel_index
                     channel_index += 1
-                elif words[i] == "Zrotation":
+                elif words[i] == "Zrotation".upper():
                     game_object.chanel_index.rotation[2] = channel_index
                     channel_index += 1
         elif words[0] == "End":
@@ -270,31 +307,35 @@ def read_bvh(filepath):
         elif words[0] == "MOTION":
             break
     root.animation = Animation(filepath)
-    set_mesh_recursive(root)
+    # print(root.children[0].transform.position[1]/20)
+    set_mesh_recursive(root, root.children[0].transform.position[1]/20)
+    print("5. List all joint names")
+    root.print_recursive()
 
     return root
 
-def set_mesh_recursive(gameobject : GameObject):
+def set_mesh_recursive(gameobject : GameObject, object_scale = 1):
+    # print(object_scale)
     if gameobject.children == []:
         a = glm.vec3(0, 1, 0)
         b = glm.vec3(gameobject.end)
         v = glm.cross(a, b)
         angle = glm.acos(glm.dot(b, a) / (glm.length(a) * glm.length(b)))
-        scale = glm.vec3(1, glm.length(b)*0.5, 1)
+        scale = glm.vec3(object_scale, glm.length(b)*0.5, object_scale)
         gameobject.mesh_transform_mat = glm.rotate(angle, v) * glm.translate(glm.vec3(0, glm.length(b)*0.5, 0)) * glm.scale(scale)
 
 
     for child in gameobject.children:
         if child != gameobject.children[0]:
-            set_mesh_recursive(child)
+            set_mesh_recursive(child, object_scale)
             continue
         a = glm.vec3(0, 1, 0)
         b = glm.vec3(child.transform.position)
         v = glm.cross(a, b)
         angle = glm.acos(glm.dot(b, a) / (glm.length(a) * glm.length(b)))
-        scale = glm.vec3(1, glm.length(b)*0.5, 1)
+        scale = glm.vec3(object_scale, glm.length(b)*0.5, object_scale)
         gameobject.mesh_transform_mat = glm.rotate(angle, v) * glm.translate(glm.vec3(0, glm.length(b)*0.5, 0)) * glm.scale(scale)
-        set_mesh_recursive(child)
+        set_mesh_recursive(child, object_scale)
 
 if __name__ == "__main__":
     root = read_bvh("walk_rough.bvh")

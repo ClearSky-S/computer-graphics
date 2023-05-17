@@ -15,6 +15,10 @@ is_wireframe = False
 g_triangle_translation = glm.vec3()
 is_line_render_mode = True
 root_gameobject = read_bvh("walk_rough.bvh")
+object_scale_multiplier = 30
+object_scale = root_gameobject.children[0].transform.position[1] * object_scale_multiplier
+# print(object_scale)
+camera.distance = object_scale
 
 
 
@@ -195,10 +199,10 @@ def key_callback(window, key, scancode, action, mods):
 
 def scroll_callback(window, xoffset, yoffset):
     if yoffset < 0:
-        camera.distance += 10
+        camera.distance += object_scale / 3
     elif yoffset > 0:
-        if camera.distance>1.1:
-            camera.distance -= 10
+        if camera.distance > object_scale / 3+0.000001:
+            camera.distance -= object_scale / 3
     # offset = glm.vec4(0, 0, yoffset*0.01, 0)
     # if (glm.determinant(camera.get_view_matrix_raw()) != 0):
     #     offset = glm.inverse(camera.get_view_matrix_raw()) * offset
@@ -232,8 +236,10 @@ def mouse_button_callback(window, button, action, mods):
 
 def drop_callback(window, paths):
     # print(paths[0])
-    global root_gameobject
+    global root_gameobject, camera, object_scale
     root_gameobject = read_bvh(paths[0])
+    object_scale = root_gameobject.children[0].transform.position[1] * object_scale_multiplier
+    camera.distance = object_scale
 
 def framebuffer_size_callback(window, width, height):
     glViewport(0, 0, width, height)
@@ -278,21 +284,23 @@ def prepare_vao_frame():
 
     return VAO
 def draw_grid(MVP_loc, camera, vao_frame):
+    global object_scale
     glBindVertexArray(vao_frame)
     # draw grid
     for i in range(-5, 6):
-        I = glm.translate(glm.vec3(0, 0, i *0.2 ))
-        MVP = camera.get_view_matrix() * glm.scale(glm.vec3(50,50,50)) * I
+        I = glm.translate(glm.vec3(0, 0, i *0.2))
+        grid_scale = glm.scale(glm.vec3(object_scale))
+        MVP = camera.get_view_matrix() * grid_scale * I
         glUniformMatrix4fv(MVP_loc, 1, GL_FALSE, glm.value_ptr(MVP))
         glDrawArrays(GL_LINES, 6, 2)
         I = glm.translate(glm.vec3(i*0.2 , 0, 0))
-        MVP = camera.get_view_matrix()* glm.scale(glm.vec3(50,50,50)) * I
+        MVP = camera.get_view_matrix()* grid_scale * I
         glUniformMatrix4fv(MVP_loc, 1, GL_FALSE, glm.value_ptr(MVP))
         glDrawArrays(GL_LINES, 8, 2)
 
     # draw world frame
     I = glm.mat4()
-    MVP = camera.get_view_matrix()* glm.scale(glm.vec3(50,50,50)) * I
+    MVP = camera.get_view_matrix()* grid_scale * I
     glUniformMatrix4fv(MVP_loc, 1, GL_FALSE, glm.value_ptr(MVP))
     glDrawArrays(GL_LINES, 0, 6)
 
@@ -435,7 +443,8 @@ def main():
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         glEnable(GL_DEPTH_TEST)
 
-
+        t = glfwGetTime()
+        root_gameobject.update_animation(t)
         if is_line_render_mode:
             glUseProgram(shader_program)
             glBindVertexArray(vao_frame)
