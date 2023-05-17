@@ -5,11 +5,11 @@ import numpy as np
 class GameObject:
     def __init__(self, name="gameobject", parent=None):
         self.name = name
-        self.transform = Transform()  # 애니메이션이 적용되지 않은 joint transform
-        self.link_transform = Transform()  # 애니메이션을 위한 link transform
+        self.transform = Transform(self)  # 애니메이션이 적용되지 않은 joint transform
+        self.link_transform = Transform(self, True)  # 애니메이션을 위한 link transform
         self.chanel_index = ChanelIndex()
         self.is_visible = True  # 메쉬가 눈에 보이는 지
-        self.mesh_transform = Transform()  # (0, 0, 0)에 위치한 단위 Cube를 이동시키기 위한 데이터
+        self.mesh_transform = Transform(self)  # (0, 0, 0)에 위치한 단위 Cube를 이동시키기 위한 데이터
         self.end = None  # 자식이 없는 마지막 joint
 
         self.children = []  # 자식 게임 오브젝트
@@ -32,34 +32,54 @@ class GameObject:
         print("  " * depth + self.name)
         print("  " * depth + "  - pos: " + self.transform.position.__str__())
         print("  " * depth + "  - childs: " + self.children.__str__())
+        print("  " * depth + "  - link rotation index: " + self.chanel_index.rotation.__str__())
         if self.end is not None:
             print("  " * depth + "  - end: " + self.end.__str__())
 
         # print("  " * depth + " - childs: " + str(len(self.children)))
         for child in self.children:
             child.print_recursive(depth + 1)
+
     def __str__(self):
         return self.name + "\n"
 
     def __repr__(self):
         return self.name
 
+
 class Transform:
-    def __init__(self):
+    def __init__(self, gameobject, is_link=False):
+        self.gameobject = gameobject
         self.position = [0, 0, 0]
         self.rotation = [0, 0, 0]
         self.scale = [1.0, 1.0, 1.0]
+        self.is_link = is_link
+
     def get_local_transform_mat(self):
-        return glm.translate(glm.mat4(1.0), self.position) * \
-               glm.rotate(glm.mat4(1.0), np.radians(self.rotation[0]), glm.vec3(1.0, 0.0, 0.0)) * \
-               glm.rotate(glm.mat4(1.0), np.radians(self.rotation[1]), glm.vec3(0.0, 1.0, 0.0)) * \
-               glm.rotate(glm.mat4(1.0), np.radians(self.rotation[2]), glm.vec3(0.0, 0.0, 1.0)) * \
-               glm.scale(glm.mat4(1.0), self.scale)
+        if not self.is_link:
+            return glm.translate(glm.mat4(1.0), self.position) * \
+                glm.rotate(glm.mat4(1.0), np.radians(self.rotation[0]), glm.vec3(1.0, 0.0, 0.0)) * \
+                glm.rotate(glm.mat4(1.0), np.radians(self.rotation[1]), glm.vec3(0.0, 1.0, 0.0)) * \
+                glm.rotate(glm.mat4(1.0), np.radians(self.rotation[2]), glm.vec3(0.0, 0.0, 1.0)) * \
+                glm.scale(glm.mat4(1.0), self.scale)
+        else:
+            # apply rotation with small index first
+            x = glm.rotate(glm.mat4(1.0), np.radians(self.rotation[0]), glm.vec3(1.0, 0.0, 0.0))
+            y = glm.rotate(glm.mat4(1.0), np.radians(self.rotation[1]), glm.vec3(0.0, 1.0, 0.0))
+            z = glm.rotate(glm.mat4(1.0), np.radians(self.rotation[2]), glm.vec3(0.0, 0.0, 1.0))
+            l = [(self.gameobject.chanel_index.rotation[0], x), (self.gameobject.chanel_index.rotation[1], y),
+                 (self.gameobject.chanel_index.rotation[2], z)]
+            l.sort(key=lambda e: e[0])
+            return glm.translate(glm.mat4(1.0), self.position) * \
+                l[0][1] * l[1][1] * l[2][1] * \
+                glm.scale(glm.mat4(1.0), self.scale)
+
 
 class ChanelIndex:
     def __init__(self):
-        self.position = [-1,-1,-1]
-        self.rotation = [-1,-1,-1]
+        self.position = [-1, -1, -1]
+        self.rotation = [-1, -1, -1]
+
 
 class Animation:
     def __init__(self, filepath):
@@ -67,7 +87,6 @@ class Animation:
         self.current_frame = 0
         self.frame_time = 0.1
         self.animation_data = []
-
 
         f = open(filepath, 'r')
         file = f.read().split('\n')
@@ -77,7 +96,6 @@ class Animation:
             index += 1
         index += 1
         # print(file[index])
-
 
         if file[index].split(':')[0] != "Frames":  # Frames: 1
             print("Error: Frames is not defined")
@@ -96,7 +114,8 @@ class Animation:
             self.animation_data.append(line.split(' '))
 
     def __str__(self):
-        return "Frames: " + str(self.frames) + "\nFrame Time: " + str(self.frame_time) + "\nAnimation Data: " + str(self.animation_data)
+        return "Frames: " + str(self.frames) + "\nFrame Time: " + str(self.frame_time) + "\nAnimation Data: " + str(
+            self.animation_data)
 
     @property
     def current_anim_data(self):
@@ -106,6 +125,7 @@ class Animation:
         self.current_frame = int(time / self.frame_time)
         if self.current_frame >= self.frames:
             self.current_frame = self.current_frame % self.frames
+
 
 def read_bvh(filepath):
     f = open(filepath, 'r')
@@ -127,7 +147,7 @@ def read_bvh(filepath):
     # set channel index
     index += 1
     words = file[index].strip().split(' ')
-    for i in range(2, 2+int(words[1])):
+    for i in range(2, 2 + int(words[1])):
         if words[i] == "Xposition":
             root.chanel_index.position[0] = channel_index
             channel_index += 1
@@ -200,12 +220,6 @@ def read_bvh(filepath):
     return root
 
 
-
-
-
-
-if __name__ =="__main__":
+if __name__ == "__main__":
     root = read_bvh("walk_rough.bvh")
     root.print_recursive()
-
-
