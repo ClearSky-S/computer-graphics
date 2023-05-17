@@ -1,6 +1,10 @@
 import glm
 import numpy as np
-
+from OpenGL.GL import *
+from glfw.GLFW import *
+import glm
+import ctypes
+from camera import *
 
 class GameObject:
     def __init__(self, name="gameobject", parent=None):
@@ -39,6 +43,43 @@ class GameObject:
         # print("  " * depth + " - childs: " + str(len(self.children)))
         for child in self.children:
             child.print_recursive(depth + 1)
+
+    def draw_recusive_line(self, unif_locs_color, camera):
+        # print(self.name)
+        # M = self.get_world_transform_mat()*self.mesh_transform.get_local_transform_mat()
+        # MVP = camera.get_view_matrix() * M
+        # # print(MVP*glm.vec4(0,0,0,1))
+        # glUniformMatrix4fv(unif_locs_color['MVP'], 1, GL_FALSE, glm.value_ptr(MVP))
+        # # glUniformMatrix4fv(unif_locs_color['M'], 1, GL_FALSE, glm.value_ptr(M))
+        # # glUniform3f(unif_locs_color['material_color'], 1., 1., 1.)
+        # # glUniform3f(unif_locs_color['view_pos'], camera.camera_position().x, camera.camera_position().y,
+        # #             camera.camera_position().z)
+        # glDrawArrays(GL_LINES, 2, 2)
+        if self.children == []:
+            a = glm.vec3(0, 1, 0)
+            b = glm.vec3(self.end)
+            v = glm.cross(a, b)
+            angle = glm.acos(glm.dot(b, a) / (glm.length(a) * glm.length(b)))
+            scale = glm.vec3(glm.length(b), glm.length(b), glm.length(b))
+            M = self.get_world_transform_mat() * glm.rotate(angle, v) * glm.scale(scale)
+            MVP = camera.get_view_matrix() * M
+            glUniformMatrix4fv(unif_locs_color['MVP'], 1, GL_FALSE, glm.value_ptr(MVP))
+            glDrawArrays(GL_LINES, 2, 2)
+
+        for child in self.children:
+            a = glm.vec3(0, 1, 0)
+            b = glm.vec3(child.transform.position)
+            v = glm.cross(a, b)
+            angle = glm.acos(glm.dot(b, a) / (glm.length(a) * glm.length(b)))
+            scale = glm.vec3(glm.length(b), glm.length(b), glm.length(b))
+            M = self.get_world_transform_mat() * glm.rotate(angle, v) * glm.scale(scale)
+            MVP = camera.get_view_matrix() * M
+            glUniformMatrix4fv(unif_locs_color['MVP'], 1, GL_FALSE, glm.value_ptr(MVP))
+            glDrawArrays(GL_LINES, 2, 2)
+            child.draw_recusive_line(unif_locs_color, camera)
+
+
+
 
     def __str__(self):
         return self.name + "\n"
