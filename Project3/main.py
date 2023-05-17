@@ -19,6 +19,8 @@ object_scale_multiplier = 30
 object_scale = root_gameobject.children[0].transform.position[1] * object_scale_multiplier
 # print(object_scale)
 camera.distance = object_scale
+is_animation_active = False
+prev_time = 0
 
 
 
@@ -175,7 +177,7 @@ def load_shaders(vertex_shader_source, fragment_shader_source):
     return shader_program  # return the shader program
 
 def key_callback(window, key, scancode, action, mods):
-    global g_cam_ang, g_cam_height, is_wireframe, is_line_render_mode
+    global g_cam_ang, g_cam_height, is_wireframe, is_line_render_mode, is_animation_active
     if key == GLFW_KEY_ESCAPE and action == GLFW_PRESS:
         glfwSetWindowShouldClose(window, GLFW_TRUE);
     else:
@@ -196,6 +198,14 @@ def key_callback(window, key, scancode, action, mods):
                 is_line_render_mode = True
             if key == GLFW_KEY_2:
                 is_line_render_mode = False
+            if key == GLFW_KEY_SPACE:
+                # set animation flag
+                is_animation_active = not is_animation_active
+                if not is_animation_active:
+                    # reset animation
+                    root_gameobject.reset_link_transform()
+                    root_gameobject.animation.set_time(0)
+
 
 def scroll_callback(window, xoffset, yoffset):
     if yoffset < 0:
@@ -240,6 +250,7 @@ def drop_callback(window, paths):
     root_gameobject = read_bvh(paths[0])
     object_scale = root_gameobject.children[0].transform.position[1] * object_scale_multiplier
     camera.distance = object_scale
+    camera.origin = glm.vec3(0, 0, 0)
 
 def framebuffer_size_callback(window, width, height):
     glViewport(0, 0, width, height)
@@ -383,7 +394,7 @@ def prepare_vao_cube():
     return VAO
 
 def main():
-    global screen_pos, screen_pos_prev, is_panning, is_orbiting, root_gameobject, is_line_render_mode
+    global screen_pos, screen_pos_prev, is_panning, is_orbiting, root_gameobject, is_line_render_mode, is_animation_active
     # initialize glfw
     if not glfwInit():
         return
@@ -434,6 +445,7 @@ def main():
     # prepare vaos
     vao_frame = prepare_vao_frame()
     vao_cube = prepare_vao_cube()
+    prev_time = glfwGetTime()
 
     # loop until the user closes the window
     while not glfwWindowShouldClose(window):
@@ -443,8 +455,12 @@ def main():
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         glEnable(GL_DEPTH_TEST)
 
-        t = glfwGetTime()
-        root_gameobject.update_animation(t)
+        delta_time = glfwGetTime() - prev_time
+        prev_time = glfwGetTime()
+
+        if is_animation_active:
+            root_gameobject.animation.add_time(delta_time)
+            root_gameobject.update_animation()
         if is_line_render_mode:
             glUseProgram(shader_program)
             glBindVertexArray(vao_frame)
@@ -476,7 +492,7 @@ def main():
         screen_pos_prev = screen_pos
         screen_pos = glfwGetCursorPos(window)
         if is_panning:
-            offset = np.subtract(screen_pos, screen_pos_prev)*0.005
+            offset = np.subtract(screen_pos, screen_pos_prev)*0.005 * object_scale/5
             offset = glm.vec4(-offset[0], offset[1], 0, 0)
             if (glm.determinant(camera.get_view_matrix_raw()) != 0):
                 offset = glm.inverse(camera.get_view_matrix_raw()) * offset

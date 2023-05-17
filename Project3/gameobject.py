@@ -98,11 +98,10 @@ class GameObject:
         for child in self.children:
             child.reset_link_transform()
 
-    def update_animation(self, time, animation=None):
+    def update_animation(self, animation=None):
         # print(self.name)
         if animation is None:
             animation = self.animation
-            animation.set_time(time)
 
         if animation is not None:
             for i in range(0,3):
@@ -114,7 +113,7 @@ class GameObject:
 
 
         for child in self.children:
-            child.update_animation(time, animation)
+            child.update_animation(animation)
 
 
     def __str__(self):
@@ -165,6 +164,7 @@ class Animation:
         self.current_frame = 0
         self.frame_time = 0.1
         self.animation_data = []
+        self.time = 0.0
 
         joint_cnt = 0
 
@@ -212,7 +212,11 @@ class Animation:
         return self.animation_data[self.current_frame]
 
     def set_time(self, time):
-        self.current_frame = int(time / self.frame_time) % self.frames
+        self.time = time
+        self.current_frame = int(self.time / self.frame_time) % self.frames
+    def add_time(self, delta_time):
+        self.time += delta_time
+        self.current_frame = int(self.time / self.frame_time) % self.frames
         # print(self.current_frame)
         # print(self.current_anim_data[0])
 
