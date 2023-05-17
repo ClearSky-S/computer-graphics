@@ -246,7 +246,8 @@ def mouse_button_callback(window, button, action, mods):
 
 def drop_callback(window, paths):
     # print(paths[0])
-    global root_gameobject, camera, object_scale
+    global root_gameobject, camera, object_scale, is_animation_active
+    is_animation_active = False
     root_gameobject = read_bvh(paths[0])
     object_scale = root_gameobject.children[0].transform.position[1] * object_scale_multiplier
     camera.distance = object_scale

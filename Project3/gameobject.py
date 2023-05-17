@@ -60,8 +60,10 @@ class GameObject:
             a = glm.vec3(0, 1, 0)
             b = glm.vec3(self.end)
             v = glm.cross(a, b)
+            if v == glm.vec3(0, 0, 0):
+                v = glm.vec3(1, 0, 0)
             angle = glm.acos(glm.dot(b, a) / (glm.length(a) * glm.length(b)))
-            scale = glm.vec3(glm.length(b), glm.length(b), glm.length(b))
+            scale = glm.vec3(1, glm.length(b), 1)
             M = self.get_world_transform_mat() * glm.rotate(angle, v) * glm.scale(scale)
             MVP = camera.get_view_matrix() * M
             glUniformMatrix4fv(unif_locs_color['MVP'], 1, GL_FALSE, glm.value_ptr(MVP))
@@ -71,8 +73,10 @@ class GameObject:
             a = glm.vec3(0, 1, 0)
             b = glm.vec3(child.transform.position)
             v = glm.cross(a, b)
+            if v == glm.vec3(0, 0, 0):
+                v = glm.vec3(1, 0, 0)
             angle = glm.acos(glm.dot(b, a) / (glm.length(a) * glm.length(b)))
-            scale = glm.vec3(glm.length(b), glm.length(b), glm.length(b))
+            scale = glm.vec3(1, glm.length(b), 1)
             M = self.get_world_transform_mat() * glm.rotate(angle, v) * glm.scale(scale)
             MVP = camera.get_view_matrix() * M
             glUniformMatrix4fv(unif_locs_color['MVP'], 1, GL_FALSE, glm.value_ptr(MVP))
@@ -324,6 +328,8 @@ def set_mesh_recursive(gameobject : GameObject, object_scale = 1):
         a = glm.vec3(0, 1, 0)
         b = glm.vec3(gameobject.end)
         v = glm.cross(a, b)
+        if v == glm.vec3(0, 0, 0):
+            v = glm.vec3(1, 0, 0)
         angle = glm.acos(glm.dot(b, a) / (glm.length(a) * glm.length(b)))
         scale = glm.vec3(object_scale, glm.length(b)*0.5, object_scale)
         gameobject.mesh_transform_mat = glm.rotate(angle, v) * glm.translate(glm.vec3(0, glm.length(b)*0.5, 0)) * glm.scale(scale)
@@ -336,6 +342,8 @@ def set_mesh_recursive(gameobject : GameObject, object_scale = 1):
         a = glm.vec3(0, 1, 0)
         b = glm.vec3(child.transform.position)
         v = glm.cross(a, b)
+        if v == glm.vec3(0, 0, 0):
+            v = glm.vec3(1, 0, 0)
         angle = glm.acos(glm.dot(b, a) / (glm.length(a) * glm.length(b)))
         scale = glm.vec3(object_scale, glm.length(b)*0.5, object_scale)
         gameobject.mesh_transform_mat = glm.rotate(angle, v) * glm.translate(glm.vec3(0, glm.length(b)*0.5, 0)) * glm.scale(scale)
