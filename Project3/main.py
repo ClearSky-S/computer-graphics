@@ -4,7 +4,7 @@ import glm
 import ctypes
 import numpy as np
 from camera import *
-from gameobject import GameObject, Mesh
+from gameobject import GameObject
 initial_viewport_size = (1200, 800)
 screen_pos_prev = (0,0)
 screen_pos = (0,0)

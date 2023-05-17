@@ -30,6 +30,11 @@ class GameObject:
 
     def print_recursive(self, depth=0):
         print("  " * depth + self.name)
+        print("  " * depth + "  - pos: " + self.transform.position.__str__())
+        print("  " * depth + "  - childs: " + self.children.__str__())
+        if self.end is not None:
+            print("  " * depth + "  - end: " + self.end.__str__())
+
         # print("  " * depth + " - childs: " + str(len(self.children)))
         for child in self.children:
             child.print_recursive(depth + 1)
